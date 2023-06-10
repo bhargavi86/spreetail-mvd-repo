@@ -148,11 +148,17 @@ namespace Spreetail.MVD
                         case "MEMBEREXISTS":
                             do
                             {
+                                Console.WriteLine("Enter key value:");
+                                key = Console.ReadLine();
+                            }
+                            while (string.IsNullOrEmpty(key));
+                            do
+                            {
                                 Console.WriteLine("Enter member value:");
                                 member = Console.ReadLine();
                             }
                             while (string.IsNullOrEmpty(member));
-                            var memberExistsResult = _commandService.MEMBEREXISTS(member);
+                            var memberExistsResult = _commandService.MEMBEREXISTS(key,member);
                             Console.WriteLine(memberExistsResult);
                             break;
                         case "ALLMEMBERS":

@@ -1,45 +1,57 @@
-﻿using Spreetail.MVD.Models;
+﻿using Microsoft.Extensions.Configuration;
+using Spreetail.MVD.Models;
 using Spreetail.MVD.Services.Interfaces;
 
 namespace Spreetail.MVD.Services.Implementations
 {
     public class CommandService : ICommandService
     {
+        private readonly IConfiguration _configuration;
         private List<KeyMemberPair> _dictionary;
 
-        public CommandService()
+        public CommandService(IConfiguration configuration)
         {
+            _configuration = configuration;
             _dictionary = new List<KeyMemberPair>();
         }
 
         public bool ADD(string key, string member)
         {
             var addResult = true;
-            var keyExists = _dictionary.Exists(x => x.Key == key);
+            var maxKeyCount = Convert.ToInt32(_configuration["Application:MaxKeyCount"]);
+            var maxMemberCount = Convert.ToInt32(_configuration["Application:MaxMemberCount"]);
 
-            if (keyExists)
+            if(_dictionary.Count < maxKeyCount || _dictionary.Exists(x => x.Key == key))
             {
-                var memberExists = _dictionary.Where(x => x.Key == key).First().Members?.Exists(y => y == member);
+                var keyExists = _dictionary.Exists(x => x.Key == key);
 
-                if (!memberExists.HasValue)
+                if (keyExists)
                 {
-                    _dictionary.First(x => x.Key == key).Members = new List<string>() { member };                   
-                }
-                else
-                {
-                    if (memberExists.Value)
+                    var memberExists = _dictionary.Where(x => x.Key == key).First().Members?.Exists(y => y == member);
+
+                    if (!memberExists.HasValue)
                     {
-                        addResult = false;
+                        _dictionary.First(x => x.Key == key).Members = new List<string>() { member };
                     }
                     else
                     {
-                        _dictionary.First(x => x.Key == key).Members?.Add(member);
+                        if (_dictionary.First(x => x.Key == key).Members?.Count < maxMemberCount)
+                        {
+                            if (memberExists.Value)
+                            {
+                                addResult = false;
+                            }
+                            else
+                            {
+                                _dictionary.First(x => x.Key == key).Members?.Add(member);
+                            }
+                        }
                     }
-                }                
-            }
-            else
-            {
-                _dictionary.Add(new KeyMemberPair() { Key = key, Members = new List<string>() { member } });
+                }
+                else
+                {
+                    _dictionary.Add(new KeyMemberPair() { Key = key, Members = new List<string>() { member } });
+                }
             }
 
             return addResult;
@@ -85,18 +97,18 @@ namespace Spreetail.MVD.Services.Implementations
             return keys.Count > 0 ? keys : null;
         }
 
-        public bool MEMBEREXISTS(string member)
+        public bool MEMBEREXISTS(string key, string member)
         {
             var memberExists = false;
-            var memberLists = _dictionary.Select(x => x.Members);
-            foreach(var memberList in memberLists)
+            var keyPair = _dictionary.Where(x => x.Key == key).FirstOrDefault();
+            if(keyPair != null)
             {
-                if(memberList != null)
+                if (keyPair.Members != null)
                 {
-                    memberExists = memberList.Contains(member);
-                    break;
-                }
+                    memberExists = keyPair.Members.Contains(member);
+                }              
             }
+
             return memberExists;
         }
 

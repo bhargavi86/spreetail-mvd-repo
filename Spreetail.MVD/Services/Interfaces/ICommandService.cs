@@ -18,7 +18,7 @@ namespace Spreetail.MVD.Services.Interfaces
 
         bool KEYEXISTS(string key);
 
-        bool MEMBEREXISTS(string member);
+        bool MEMBEREXISTS(string key, string member);
 
         List<string> ALLMEMBERS();
 

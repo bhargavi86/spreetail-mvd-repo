@@ -1,19 +1,33 @@
+using Microsoft.Extensions.Configuration;
 using Spreetail.MVD.Services.Implementations;
+using Spreetail.MVD.Services.Interfaces;
 
 namespace Spreetail.Test
 {
     public class CommandServiceTests
     {
+        private IConfiguration _configuration;
+        private ICommandService _commandService;
+
+        public CommandServiceTests()
+        {
+            var inMemorySettings = new Dictionary<string, string> {
+                {"Application:MaxKeyCount", "3"},
+                {"Application:MaxMemberCount", "3"}
+            };
+            _configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(inMemorySettings)
+                .Build();
+            _commandService = new CommandService(_configuration);
+        }
+
         [Fact]
         public void Add_Member_ReturnsTrue()
         {
-            //Arrange
-            var commandService = new CommandService();
-
             //Act
-            commandService.ADD("foo", "bar");
-            var keyExists = commandService.KEYEXISTS("foo");
-            var memberExists = commandService.MEMBEREXISTS("bar");
+            _commandService.ADD("foo", "bar");
+            var keyExists = _commandService.KEYEXISTS("foo");
+            var memberExists = _commandService.MEMBEREXISTS("foo", "bar");
 
             //Assert
             Assert.True(keyExists);
@@ -24,13 +38,12 @@ namespace Spreetail.Test
         public void Remove_Member_ReturnsFalse()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            commandService.REMOVE("foo", "bar");
-            var keyExists = commandService.KEYEXISTS("foo");
-            var memberExists = commandService.MEMBEREXISTS("bar");
+            _commandService.REMOVE("foo", "bar");
+            var keyExists = _commandService.KEYEXISTS("foo");
+            var memberExists = _commandService.MEMBEREXISTS("foo", "bar");
 
             //Assert
             Assert.False(keyExists);
@@ -41,12 +54,11 @@ namespace Spreetail.Test
         public void Keys_ReturnsAllKeys()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("sweet", "laddu");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("sweet", "laddu");
 
             //Act
-            var keys = commandService.KEYS();
+            var keys = _commandService.KEYS();
 
             //Assert
             Assert.NotEmpty(keys);
@@ -60,12 +72,11 @@ namespace Spreetail.Test
         public void Members_ByKey_ReturnsAllMembers()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
 
             //Act
-            var members = commandService.MEMBERS("foo");
+            var members = _commandService.MEMBERS("foo");
 
             //Assert
             Assert.NotEmpty(members);
@@ -78,13 +89,12 @@ namespace Spreetail.Test
         public void RemoveAll_ByKey_RemovesKeyMemberPair()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
 
             //Act
-            var result = commandService.REMOVEALL("foo");
-            var items = commandService.ITEMS();
+            var result = _commandService.REMOVEALL("foo");
+            var items = _commandService.ITEMS();
 
             //Assert
             Assert.True(result);
@@ -95,14 +105,13 @@ namespace Spreetail.Test
         public void Clear_RemovesAllKeyMemberPairs()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
-            commandService.ADD("sweet", "chocolate");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
+            _commandService.ADD("sweet", "chocolate");
 
             //Act
-            commandService.CLEAR();
-            var items = commandService.ITEMS();
+            _commandService.CLEAR();
+            var items = _commandService.ITEMS();
 
             //Assert
             Assert.Null(items);
@@ -112,11 +121,10 @@ namespace Spreetail.Test
         public void KeyExists_HasKey_ReturnsTrue()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            var keyExists = commandService.KEYEXISTS("foo");
+            var keyExists = _commandService.KEYEXISTS("foo");
 
             //Assert
             Assert.True(keyExists);
@@ -126,11 +134,10 @@ namespace Spreetail.Test
         public void KeyExists_DoesNotHaveKey_ReturnsFalse()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            var keyExists = commandService.KEYEXISTS("sweet");
+            var keyExists = _commandService.KEYEXISTS("sweet");
 
             //Assert
             Assert.False(keyExists);
@@ -140,11 +147,10 @@ namespace Spreetail.Test
         public void MemberExists_HasMember_ReturnsTrue()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            var keyExists = commandService.MEMBEREXISTS("bar");
+            var keyExists = _commandService.MEMBEREXISTS("foo", "bar");
 
             //Assert
             Assert.True(keyExists);
@@ -154,11 +160,10 @@ namespace Spreetail.Test
         public void MemberExists_DoesNotHaveMember_ReturnsFalse()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            var keyExists = commandService.MEMBEREXISTS("marz");
+            var keyExists = _commandService.MEMBEREXISTS("foo","marz");
 
             //Assert
             Assert.False(keyExists);
@@ -168,13 +173,12 @@ namespace Spreetail.Test
         public void AllMembers_ReturnsAllMembers()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
-            commandService.ADD("sweet", "chocolate");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
+            _commandService.ADD("sweet", "chocolate");
 
             //Act
-            var allMembers = commandService.ALLMEMBERS();
+            var allMembers = _commandService.ALLMEMBERS();
 
             //Assert
             Assert.NotEmpty(allMembers);
@@ -189,13 +193,12 @@ namespace Spreetail.Test
         public void Items_ReturnsAllKeyMemberPairs()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
-            commandService.ADD("sweet", "chocolate");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
+            _commandService.ADD("sweet", "chocolate");
 
             //Act
-            var items = commandService.ITEMS();
+            var items = _commandService.ITEMS();
 
             //Assert
             Assert.NotEmpty(items);
@@ -205,13 +208,12 @@ namespace Spreetail.Test
         public void Sort_ReturnsAllKeyMemberPairs_InAlphabeticalOrder()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("sweet", "chocolate");
-            commandService.ADD("foo", "bar");
-            commandService.ADD("foo", "marz");
+            _commandService.ADD("sweet", "chocolate");
+            _commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
 
             //Act
-            var items = commandService.SORT();
+            var items = _commandService.SORT();
 
             //Assert
             Assert.NotEmpty(items);
@@ -225,12 +227,11 @@ namespace Spreetail.Test
         public void SortMembers_ByKey_ReturnsMembers_InAlphabeticalOrder()
         {
             //Arrange
-            var commandService = new CommandService();
-            commandService.ADD("foo", "marz");
-            commandService.ADD("foo", "bar");
+            _commandService.ADD("foo", "marz");
+            _commandService.ADD("foo", "bar");
 
             //Act
-            var members = commandService.SORTMEMBERS("foo");
+            var members = _commandService.SORTMEMBERS("foo");
 
             //Assert
             Assert.NotEmpty(members);
